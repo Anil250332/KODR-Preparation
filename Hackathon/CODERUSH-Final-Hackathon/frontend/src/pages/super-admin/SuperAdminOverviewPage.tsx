@@ -4,6 +4,7 @@ import { fetchHospitals } from '../../store/slices/hospitalSlice';
 import { fetchEmergencyRequests } from '../../store/slices/emergencySlice';
 import { StatCard } from '../../components/common/StatCard';
 import { StatusBadge } from '../../components/common/Badge';
+import { SkeletonListItem } from '../../components/common/Skeleton';
 import {
   Building2,
   Droplet,
@@ -18,9 +19,9 @@ import { useNavigate } from 'react-router-dom';
 export const SuperAdminOverviewPage: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const { hospitals } = useAppSelector((state) => state.hospitals);
-  const { requests } = useAppSelector((state) => state.emergency);
-  const { items } = useAppSelector((state) => state.inventory);
+  const { hospitals, isLoading: hospitalsLoading } = useAppSelector((state) => state.hospitals);
+  const { requests, isLoading: emergencyLoading } = useAppSelector((state) => state.emergency);
+  const { items, isLoading: inventoryLoading } = useAppSelector((state) => state.inventory);
 
   useEffect(() => {
     dispatch(fetchHospitals());
@@ -71,6 +72,7 @@ export const SuperAdminOverviewPage: React.FC = () => {
           subtitle={`${verifiedHospitals} verified centres`}
           icon={Building2}
           color="teal"
+          isLoading={hospitalsLoading && hospitals.length === 0}
         />
         <StatCard
           title="Active Emergencies"
@@ -78,6 +80,7 @@ export const SuperAdminOverviewPage: React.FC = () => {
           subtitle="Awaiting hospital acceptance"
           icon={Radio}
           color="rose"
+          isLoading={emergencyLoading && requests.length === 0}
         />
         <StatCard
           title="Connected Hospitals"
@@ -85,6 +88,7 @@ export const SuperAdminOverviewPage: React.FC = () => {
           subtitle="Emergencies matched & accepted"
           icon={Droplet}
           color="emerald"
+          isLoading={emergencyLoading && requests.length === 0}
         />
         <StatCard
           title="Available Blood Units"
@@ -92,6 +96,7 @@ export const SuperAdminOverviewPage: React.FC = () => {
           subtitle="Total verified grid stock"
           icon={Droplet}
           color="blue"
+          isLoading={inventoryLoading && items.length === 0}
         />
       </div>
 
@@ -105,7 +110,7 @@ export const SuperAdminOverviewPage: React.FC = () => {
               <p className="text-xs text-slate-400 mt-0.5">Live requests seeking or allocating units</p>
             </div>
             <button
-              onClick={() => navigate('/super-admin/emergency-monitoring')}
+              onClick={() => navigate('/super-admin/emergency-requests')}
               className="text-xs font-bold text-[#0d9488] hover:text-[#0f766e] flex items-center space-x-1"
             >
               <span>View All</span>
@@ -114,31 +119,41 @@ export const SuperAdminOverviewPage: React.FC = () => {
           </div>
 
           <div className="divide-y divide-slate-100">
-            {requests.slice(0, 3).map((req) => (
-              <div key={req.id} className="py-4 hover:bg-slate-50/50 transition-colors">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center space-x-3.5">
-                    <span className="w-10 h-10 rounded-2xl bg-rose-50 text-rose-600 font-black text-xs flex items-center justify-center border border-rose-100">
-                      {req.bloodGroup}
-                    </span>
-                    <div>
-                      <div className="flex items-center space-x-2">
-                        <span className="font-bold text-xs text-slate-900">{req.requestId}</span>
-                        <StatusBadge status={req.urgency} />
-                        <StatusBadge status={req.status} />
+            {emergencyLoading && requests.length === 0 ? (
+              <>
+                <SkeletonListItem />
+                <SkeletonListItem />
+                <SkeletonListItem />
+              </>
+            ) : requests.length === 0 ? (
+              <p className="py-6 text-xs text-slate-400 text-center font-medium">No active emergencies</p>
+            ) : (
+              requests.slice(0, 3).map((req) => (
+                <div key={req.id} className="py-4 hover:bg-slate-50/50 transition-colors">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center space-x-3.5">
+                      <span className="w-10 h-10 rounded-2xl bg-rose-50 text-rose-600 font-black text-xs flex items-center justify-center border border-rose-100">
+                        {req.bloodGroup}
+                      </span>
+                      <div>
+                        <div className="flex items-center space-x-2">
+                          <span className="font-bold text-xs text-slate-900">{req.requestId}</span>
+                          <StatusBadge status={req.urgency} />
+                          <StatusBadge status={req.status} />
+                        </div>
+                        <p className="text-xs text-slate-500 mt-1">
+                          {req.requestingHospitalName} • {req.component} ({req.allocatedUnits}/{req.requiredUnits} Units)
+                        </p>
                       </div>
-                      <p className="text-xs text-slate-500 mt-1">
-                        {req.requestingHospitalName} • {req.component} ({req.allocatedUnits}/{req.requiredUnits} Units)
-                      </p>
                     </div>
+                    <span className="text-[11px] font-semibold text-slate-500 flex items-center gap-1">
+                      <Clock className="w-3 h-3 text-slate-400" />
+                      {req.requiredByTime}
+                    </span>
                   </div>
-                  <span className="text-[11px] font-semibold text-slate-500 flex items-center gap-1">
-                    <Clock className="w-3 h-3 text-slate-400" />
-                    {req.requiredByTime}
-                  </span>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
 
@@ -155,26 +170,36 @@ export const SuperAdminOverviewPage: React.FC = () => {
           </div>
 
           <div className="divide-y divide-slate-100">
-            {hospitals.map((hosp) => (
-              <div key={hosp.id} className="py-3.5 flex items-center justify-between hover:bg-slate-50/50">
-                <div className="min-w-0 pr-2">
-                  <div className="flex items-center space-x-2">
-                    <p className="text-xs font-bold text-slate-900 truncate">{hosp.name}</p>
-                    <StatusBadge status={hosp.status} />
+            {hospitalsLoading && hospitals.length === 0 ? (
+              <>
+                <SkeletonListItem />
+                <SkeletonListItem />
+                <SkeletonListItem />
+              </>
+            ) : hospitals.length === 0 ? (
+              <p className="py-6 text-xs text-slate-400 text-center font-medium">No hospitals registered</p>
+            ) : (
+              hospitals.slice(0, 4).map((hosp) => (
+                <div key={hosp.id} className="py-3.5 flex items-center justify-between hover:bg-slate-50/50">
+                  <div className="min-w-0 pr-2">
+                    <div className="flex items-center space-x-2">
+                      <p className="text-xs font-bold text-slate-900 truncate">{hosp.name}</p>
+                      <StatusBadge status={hosp.status} />
+                    </div>
+                    <p className="text-[11px] text-slate-400 mt-0.5 flex items-center gap-1">
+                      <MapPin className="w-3 h-3 text-slate-400" />
+                      {hosp.city} • Lic: {hosp.licenseNumber}
+                    </p>
                   </div>
-                  <p className="text-[11px] text-slate-400 mt-0.5 flex items-center gap-1">
-                    <MapPin className="w-3 h-3 text-slate-400" />
-                    {hosp.city} • Lic: {hosp.licenseNumber}
-                  </p>
+                  <button
+                    onClick={() => navigate('/super-admin/hospitals')}
+                    className="shrink-0 px-3 py-1 text-xs font-semibold rounded-xl bg-slate-50 hover:bg-[#0d9488] hover:text-white text-slate-600 transition-colors"
+                  >
+                    Inspect
+                  </button>
                 </div>
-                <button
-                  onClick={() => navigate('/super-admin/hospitals')}
-                  className="shrink-0 px-3 py-1 text-xs font-semibold rounded-xl bg-slate-50 hover:bg-[#0d9488] hover:text-white text-slate-600 transition-colors"
-                >
-                  Inspect
-                </button>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
       </div>

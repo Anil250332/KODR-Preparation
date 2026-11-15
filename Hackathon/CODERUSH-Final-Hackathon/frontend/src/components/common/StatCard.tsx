@@ -1,5 +1,6 @@
 import React from 'react';
 import { LucideIcon } from 'lucide-react';
+import { SkeletonCard } from './Skeleton';
 
 interface StatCardProps {
   title: string;
@@ -9,6 +10,7 @@ interface StatCardProps {
   trend?: string;
   trendType?: 'positive' | 'negative' | 'neutral';
   color?: 'emerald' | 'rose' | 'amber' | 'blue' | 'teal';
+  isLoading?: boolean;
 }
 
 export const StatCard: React.FC<StatCardProps> = ({
@@ -17,7 +19,12 @@ export const StatCard: React.FC<StatCardProps> = ({
   subtitle,
   icon: Icon,
   color = 'teal',
+  isLoading = false,
 }) => {
+  if (isLoading) {
+    return <SkeletonCard />;
+  }
+
   const colorMap = {
     teal: {
       iconBg: 'bg-[#0d9488]/10 text-[#0d9488]',

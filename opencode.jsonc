@@ -1,0 +1,26 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "inception/mercury-3",
+  "providers": {
+    "inception": {
+      "name": "Inception",
+      "env": ["INCEPTION_API_KEY"],
+      "package": "@opencode/ai/providers/openai-compatible",
+      "settings": {
+        "baseURL": "https://api.inceptionlabs.ai/v1"
+      },
+      "models": {
+        "mercury-3": {
+          "name": "Mercury 3",
+          "settings": {
+            "reasoningEffort": "medium"
+          },
+          "limit": {
+            "context": 1000000,
+            "output": 131072
+          }
+        }
+      }
+    }
+  }
+}

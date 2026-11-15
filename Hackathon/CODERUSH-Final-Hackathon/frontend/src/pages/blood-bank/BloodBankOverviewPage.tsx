@@ -5,6 +5,7 @@ import { fetchHospitalInventory } from '../../store/slices/inventorySlice';
 import { fetchEmergencyRequests } from '../../store/slices/emergencySlice';
 import { StatCard } from '../../components/common/StatCard';
 import { StatusBadge } from '../../components/common/Badge';
+import { SkeletonListItem } from '../../components/common/Skeleton';
 import {
   Droplet,
   BookmarkCheck,
@@ -20,8 +21,8 @@ export const BloodBankOverviewPage: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { currentUser } = useAppSelector((state) => state.auth);
-  const { items, isLoading } = useAppSelector((state) => state.inventory);
-  const { requests } = useAppSelector((state) => state.emergency);
+  const { items, isLoading: inventoryLoading } = useAppSelector((state) => state.inventory);
+  const { requests, isLoading: emergencyLoading } = useAppSelector((state) => state.emergency);
   const { hospitals } = useAppSelector((state) => state.hospitals);
   const matchedHosp = hospitals.find((h) => h.id === currentUser?.hospitalId);
   const hospitalId = currentUser?.hospitalId || matchedHosp?.id || '6ae5bfa3a41657de36e25a1e';
@@ -86,6 +87,7 @@ export const BloodBankOverviewPage: React.FC = () => {
           subtitle="Certified units in cold storage"
           icon={Droplet}
           color="teal"
+          isLoading={inventoryLoading && myInventory.length === 0}
         />
         <StatCard
           title="Reserved Units"
@@ -93,6 +95,7 @@ export const BloodBankOverviewPage: React.FC = () => {
           subtitle="Locked for accepted hospital offers"
           icon={BookmarkCheck}
           color="amber"
+          isLoading={inventoryLoading && myInventory.length === 0}
         />
         <StatCard
           title="Incoming Requests"
@@ -100,6 +103,7 @@ export const BloodBankOverviewPage: React.FC = () => {
           subtitle="Urgent broadcasts in network"
           icon={Inbox}
           color="rose"
+          isLoading={emergencyLoading && requests.length === 0}
         />
         <StatCard
           title="Critical Shortage"
@@ -107,6 +111,7 @@ export const BloodBankOverviewPage: React.FC = () => {
           subtitle="Groups below threshold"
           icon={AlertTriangle}
           color="blue"
+          isLoading={inventoryLoading && myInventory.length === 0}
         />
       </div>
 
@@ -129,46 +134,56 @@ export const BloodBankOverviewPage: React.FC = () => {
           </div>
 
           <div className="mt-5 space-y-3.5">
-            {incomingEmergencies.map((req) => (
-              <div
-                key={req.id}
-                className="p-4 rounded-2xl border border-slate-100 bg-slate-50/60 hover:bg-slate-50 transition-colors"
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center space-x-3.5">
-                    <span className="w-10 h-10 rounded-2xl bg-rose-50 text-rose-600 font-black text-xs flex items-center justify-center border border-rose-100">
-                      {req.bloodGroup}
-                    </span>
-                    <div>
-                      <div className="flex items-center space-x-2">
-                        <span className="font-bold text-xs text-slate-900">{req.requestId}</span>
-                        <StatusBadge status={req.urgency} />
-                      </div>
-                      <p className="text-xs text-slate-800 font-bold mt-0.5">
-                        {req.requiredUnits} Units {req.component}
-                      </p>
-                    </div>
-                  </div>
-                  <span className="text-[11px] font-semibold text-rose-600 bg-rose-50 px-2.5 py-0.5 rounded-full flex items-center gap-1">
-                    <Clock className="w-3 h-3" />
-                    {req.requiredByTime}
-                  </span>
-                </div>
-
-                <div className="mt-3.5 flex items-center justify-between text-xs text-slate-500">
-                  <span className="flex items-center gap-1">
-                    <Building2 className="w-3.5 h-3.5 text-slate-400" />
-                    {req.requestingHospitalName} ({req.requestingHospitalCity})
-                  </span>
-                  <button
-                    onClick={() => navigate('/blood-bank/network-requests')}
-                    className="px-3.5 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer"
-                  >
-                    Accept & Connect →
-                  </button>
-                </div>
+            {emergencyLoading && incomingEmergencies.length === 0 ? (
+              <div className="divide-y divide-slate-100">
+                <SkeletonListItem />
+                <SkeletonListItem />
+                <SkeletonListItem />
               </div>
-            ))}
+            ) : incomingEmergencies.length === 0 ? (
+              <p className="text-xs text-slate-400 text-center py-8 font-medium">No urgent broadcasts right now</p>
+            ) : (
+              incomingEmergencies.map((req) => (
+                <div
+                  key={req.id}
+                  className="p-4 rounded-2xl border border-slate-100 bg-slate-50/60 hover:bg-slate-50 transition-colors"
+                >
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center space-x-3.5">
+                      <span className="w-10 h-10 rounded-2xl bg-rose-50 text-rose-600 font-black text-xs flex items-center justify-center border border-rose-100">
+                        {req.bloodGroup}
+                      </span>
+                      <div>
+                        <div className="flex items-center space-x-2">
+                          <span className="font-bold text-xs text-slate-900">{req.requestId}</span>
+                          <StatusBadge status={req.urgency} />
+                        </div>
+                        <p className="text-xs text-slate-800 font-bold mt-0.5">
+                          {req.requiredUnits} Units {req.component}
+                        </p>
+                      </div>
+                    </div>
+                    <span className="text-[11px] font-semibold text-rose-600 bg-rose-50 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      {req.requiredByTime}
+                    </span>
+                  </div>
+
+                  <div className="mt-3.5 flex items-center justify-between text-xs text-slate-500">
+                    <span className="flex items-center gap-1">
+                      <Building2 className="w-3.5 h-3.5 text-slate-400" />
+                      {req.requestingHospitalName} ({req.requestingHospitalCity})
+                    </span>
+                    <button
+                      onClick={() => navigate('/blood-bank/network-requests')}
+                      className="px-3.5 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs cursor-pointer"
+                    >
+                      Accept & Connect →
+                    </button>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
 
@@ -189,31 +204,42 @@ export const BloodBankOverviewPage: React.FC = () => {
           </div>
 
           <div className="mt-5 space-y-3">
-            {myInventory.map((item) => (
-              <div
-                key={item.id}
-                className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50/70 border border-slate-100 hover:bg-slate-50 transition-colors"
-              >
-                <div className="flex items-center space-x-3">
-                  <span className="w-8 h-8 rounded-xl bg-teal-50 text-teal-800 font-black text-xs flex items-center justify-center">
-                    {item.bloodGroup}
-                  </span>
-                  <div>
-                    <p className="font-bold text-xs text-slate-900">{item.component}</p>
-                    <p className="text-[10px] text-slate-400 font-mono">Temp: {item.storageTemp}</p>
+            {inventoryLoading && myInventory.length === 0 ? (
+              <div className="divide-y divide-slate-100">
+                <SkeletonListItem />
+                <SkeletonListItem />
+                <SkeletonListItem />
+                <SkeletonListItem />
+              </div>
+            ) : myInventory.length === 0 ? (
+              <p className="text-xs text-slate-400 text-center py-8 font-medium">No inventory units recorded</p>
+            ) : (
+              myInventory.map((item) => (
+                <div
+                  key={item.id}
+                  className="flex items-center justify-between p-3.5 rounded-2xl bg-slate-50/70 border border-slate-100 hover:bg-slate-50 transition-colors"
+                >
+                  <div className="flex items-center space-x-3">
+                    <span className="w-8 h-8 rounded-xl bg-teal-50 text-teal-800 font-black text-xs flex items-center justify-center">
+                      {item.bloodGroup}
+                    </span>
+                    <div>
+                      <p className="font-bold text-xs text-slate-900">{item.component}</p>
+                      <p className="text-[10px] text-slate-400 font-mono">Temp: {item.storageTemp}</p>
+                    </div>
+                  </div>
+
+                  <div className="text-right">
+                    <span className="font-black text-sm text-slate-900">{item.availableUnits} Bags</span>
+                    {item.reservedUnits > 0 && (
+                      <span className="text-[10px] text-amber-600 block font-semibold">
+                        ({item.reservedUnits} reserved)
+                      </span>
+                    )}
                   </div>
                 </div>
-
-                <div className="text-right">
-                  <span className="font-black text-sm text-slate-900">{item.availableUnits} Bags</span>
-                  {item.reservedUnits > 0 && (
-                    <span className="text-[10px] text-amber-600 block font-semibold">
-                      ({item.reservedUnits} reserved)
-                    </span>
-                  )}
-                </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
       </div>

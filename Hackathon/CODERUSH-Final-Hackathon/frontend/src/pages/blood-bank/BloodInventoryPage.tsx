@@ -11,7 +11,7 @@ import {
 import { BloodGroup, BloodComponent } from '../../types';
 import { StatCard } from '../../components/common/StatCard';
 import { Modal } from '../../components/common/Modal';
-import { SkeletonCard, Skeleton } from '../../components/common/Skeleton';
+import { SkeletonCard, Skeleton, SkeletonGridCard } from '../../components/common/Skeleton';
 import {
   Droplet,
   CheckCircle2,
@@ -134,24 +134,28 @@ export const BloodInventoryPage: React.FC = () => {
           value={totalUnitsCount}
           icon={Droplet}
           color="teal"
+          isLoading={isLoading && myItems.length === 0}
         />
         <StatCard
           title="Available"
           value={availableUnitsCount}
           icon={CheckCircle2}
           color="emerald"
+          isLoading={isLoading && myItems.length === 0}
         />
         <StatCard
           title="Reserved Units"
           value={reservedUnitsCount}
           icon={BookmarkCheck}
           color="blue"
+          isLoading={isLoading && myItems.length === 0}
         />
         <StatCard
           title="Critical Alerts"
           value={criticalCount}
           icon={AlertCircle}
           color="rose"
+          isLoading={isLoading && myItems.length === 0}
         />
       </div>
 
@@ -198,12 +202,12 @@ export const BloodInventoryPage: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {isLoading && filteredItems.length === 0 ? (
           <>
-            <SkeletonCard />
-            <SkeletonCard />
-            <SkeletonCard />
-            <SkeletonCard />
-            <SkeletonCard />
-            <SkeletonCard />
+            <SkeletonGridCard />
+            <SkeletonGridCard />
+            <SkeletonGridCard />
+            <SkeletonGridCard />
+            <SkeletonGridCard />
+            <SkeletonGridCard />
           </>
         ) : (
           filteredItems.map((item) => {

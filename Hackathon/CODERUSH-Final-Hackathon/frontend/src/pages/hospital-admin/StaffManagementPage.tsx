@@ -3,6 +3,7 @@ import { useAppDispatch, useAppSelector } from '../../hooks/redux';
 import { User, UserRole } from '../../types';
 import { StatusBadge } from '../../components/common/Badge';
 import { Modal } from '../../components/common/Modal';
+import { SkeletonStaffCard } from '../../components/common/Skeleton';
 import { apiService } from '../../services/apiService';
 import { addToast } from '../../store/slices/toastSlice';
 import { addNotification } from '../../store/slices/notificationSlice';
@@ -242,11 +243,13 @@ export const StaffManagementPage: React.FC = () => {
 
       {/* Staff Grid Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {isLoading ? (
-          <div className="col-span-2 bg-white rounded-3xl border border-slate-100 p-16 text-center">
-            <div className="inline-block w-8 h-8 border-3 border-[#0d9488] border-t-transparent rounded-full animate-spin"></div>
-            <p className="text-xs font-bold text-slate-500 mt-3">Loading hospital staff...</p>
-          </div>
+        {isLoading && filteredStaff.length === 0 ? (
+          <>
+            <SkeletonStaffCard />
+            <SkeletonStaffCard />
+            <SkeletonStaffCard />
+            <SkeletonStaffCard />
+          </>
         ) : filteredStaff.length === 0 ? (
           <div className="col-span-2 bg-white rounded-3xl border border-slate-100 p-16 text-center">
             <AlertCircle className="w-10 h-10 text-slate-300 mx-auto mb-2" />

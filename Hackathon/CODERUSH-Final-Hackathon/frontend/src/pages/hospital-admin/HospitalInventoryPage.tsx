@@ -3,6 +3,7 @@ import { useAppSelector } from '../../hooks/redux';
 import { apiService } from '../../services/apiService';
 import { BloodInventoryItem, BloodGroup, BloodComponent } from '../../types';
 import { Modal } from '../../components/common/Modal';
+import { SkeletonTableRow } from '../../components/common/Skeleton';
 import {
   Droplet,
   Plus,
@@ -185,32 +186,37 @@ export const HospitalInventoryPage: React.FC = () => {
 
       {/* Inventory Table */}
       <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
-        {isLoading ? (
-          <div className="py-20 text-center">
-            <div className="inline-block w-8 h-8 border-3 border-[#0d9488] border-t-transparent rounded-full animate-spin"></div>
-            <p className="text-xs font-bold text-slate-500 mt-3">Loading inventory records...</p>
-          </div>
-        ) : filteredItems.length === 0 ? (
-          <div className="py-16 text-center">
-            <AlertCircle className="w-10 h-10 text-slate-300 mx-auto mb-2" />
-            <p className="text-sm font-bold text-slate-700">No blood stock entries found</p>
-            <p className="text-xs text-slate-400 mt-1">Click "Add Blood Units" to add new inventory records.</p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-slate-100 bg-slate-50/75 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                  <th className="py-4 px-6">Blood Group</th>
-                  <th className="py-4 px-6">Component</th>
-                  <th className="py-4 px-6">Available Units</th>
-                  <th className="py-4 px-6">Storage Temperature</th>
-                  <th className="py-4 px-6">Expiry Date</th>
-                  <th className="py-4 px-6 text-center">Quick Stock Adjust</th>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="border-b border-slate-100 bg-slate-50/75 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                <th className="py-4 px-6">Blood Group</th>
+                <th className="py-4 px-6">Component</th>
+                <th className="py-4 px-6">Available Units</th>
+                <th className="py-4 px-6">Storage Temperature</th>
+                <th className="py-4 px-6">Expiry Date</th>
+                <th className="py-4 px-6 text-center">Quick Stock Adjust</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 text-xs">
+              {isLoading && filteredItems.length === 0 ? (
+                <>
+                  <SkeletonTableRow cols={6} />
+                  <SkeletonTableRow cols={6} />
+                  <SkeletonTableRow cols={6} />
+                  <SkeletonTableRow cols={6} />
+                  <SkeletonTableRow cols={6} />
+                </>
+              ) : filteredItems.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="py-16 text-center">
+                    <AlertCircle className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+                    <p className="text-sm font-bold text-slate-700">No blood stock entries found</p>
+                    <p className="text-xs text-slate-400 mt-1">Click "Add Blood Units" to add new inventory records.</p>
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 text-xs">
-                {filteredItems.map((item) => (
+              ) : (
+                filteredItems.map((item) => (
                   <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
                     <td className="py-4 px-6">
                       <div className="inline-flex items-center gap-2.5">
@@ -254,11 +260,11 @@ export const HospitalInventoryPage: React.FC = () => {
                       </div>
                     </td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* Add Blood Units Modal */}

@@ -14,6 +14,7 @@ import { addAuditLog, addNotification } from '../../store/slices/notificationSli
 import { addToast } from '../../store/slices/toastSlice';
 import { StatusBadge } from '../../components/common/Badge';
 import { Modal } from '../../components/common/Modal';
+import { SkeletonTableRow } from '../../components/common/Skeleton';
 import {
   Building2,
   Plus,
@@ -30,7 +31,7 @@ import {
 
 export const HospitalManagementPage: React.FC = () => {
   const dispatch = useAppDispatch();
-  const { hospitals, filterType, searchQuery } = useAppSelector((state) => state.hospitals);
+  const { hospitals, filterType, searchQuery, isLoading } = useAppSelector((state) => state.hospitals);
   const { currentUser } = useAppSelector((state) => state.auth);
 
   useEffect(() => {
@@ -297,70 +298,86 @@ export const HospitalManagementPage: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-xs">
-              {filteredHospitals.map((hosp) => (
-                <tr key={hosp.id} className="hover:bg-slate-50/60 transition-colors">
-                  <td className="py-4 px-5">
-                    <div className="flex items-center space-x-3">
-                      <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold">
-                        <Building2 className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <p className="font-bold text-slate-900">{hosp.name}</p>
-                        <p className="text-[11px] text-slate-500">{hosp.type}</p>
-                      </div>
-                    </div>
-                  </td>
-
-                  <td className="py-4 px-4 font-mono font-medium text-slate-700">
-                    {hosp.licenseNumber}
-                  </td>
-
-                  <td className="py-4 px-4 text-slate-600">
-                    <div className="flex items-center space-x-1">
-                      <MapPin className="w-3.5 h-3.5 text-slate-400" />
-                      <span>{hosp.city}, {hosp.state}</span>
-                    </div>
-                  </td>
-
-                  <td className="py-4 px-4">
-                    {hosp.hasBloodBank ? (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                        In-House Blood Centre
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-600">
-                        Storage Only
-                      </span>
-                    )}
-                  </td>
-
-                  <td className="py-4 px-4">
-                    <StatusBadge status={hosp.status} />
-                  </td>
-
-                  <td className="py-4 px-5 text-right">
-                    <div className="flex items-center justify-end space-x-2">
-                      {hosp.status !== 'VERIFIED' ? (
-                        <button
-                          onClick={() => handleVerify(hosp.id, hosp.name)}
-                          className="px-2.5 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white border border-emerald-200 text-xs font-bold transition-all flex items-center space-x-1"
-                        >
-                          <Check className="w-3.5 h-3.5" />
-                          <span>Approve & Verify</span>
-                        </button>
-                      ) : (
-                        <button
-                          onClick={() => handleSuspend(hosp.id, hosp.name)}
-                          className="px-2.5 py-1.5 rounded-lg bg-slate-100 text-slate-600 hover:bg-rose-50 hover:text-rose-600 text-xs font-semibold transition-all flex items-center space-x-1"
-                        >
-                          <Ban className="w-3.5 h-3.5" />
-                          <span>Suspend</span>
-                        </button>
-                      )}
-                    </div>
+              {isLoading && filteredHospitals.length === 0 ? (
+                <>
+                  <SkeletonTableRow cols={6} />
+                  <SkeletonTableRow cols={6} />
+                  <SkeletonTableRow cols={6} />
+                  <SkeletonTableRow cols={6} />
+                  <SkeletonTableRow cols={6} />
+                </>
+              ) : filteredHospitals.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="py-12 text-center text-slate-400 font-medium">
+                    No hospitals found matching your criteria
                   </td>
                 </tr>
-              ))}
+              ) : (
+                filteredHospitals.map((hosp) => (
+                  <tr key={hosp.id} className="hover:bg-slate-50/60 transition-colors">
+                    <td className="py-4 px-5">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center font-bold">
+                          <Building2 className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <p className="font-bold text-slate-900">{hosp.name}</p>
+                          <p className="text-[11px] text-slate-500">{hosp.type}</p>
+                        </div>
+                      </div>
+                    </td>
+
+                    <td className="py-4 px-4 font-mono font-medium text-slate-700">
+                      {hosp.licenseNumber}
+                    </td>
+
+                    <td className="py-4 px-4 text-slate-600">
+                      <div className="flex items-center space-x-1">
+                        <MapPin className="w-3.5 h-3.5 text-slate-400" />
+                        <span>{hosp.city}, {hosp.state}</span>
+                      </div>
+                    </td>
+
+                    <td className="py-4 px-4">
+                      {hosp.hasBloodBank ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                          In-House Blood Centre
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-600">
+                          Storage Only
+                        </span>
+                      )}
+                    </td>
+
+                    <td className="py-4 px-4">
+                      <StatusBadge status={hosp.status} />
+                    </td>
+
+                    <td className="py-4 px-5 text-right">
+                      <div className="flex items-center justify-end space-x-2">
+                        {hosp.status !== 'VERIFIED' ? (
+                          <button
+                            onClick={() => handleVerify(hosp.id, hosp.name)}
+                            className="px-2.5 py-1.5 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white border border-emerald-200 text-xs font-bold transition-all flex items-center space-x-1"
+                          >
+                            <Check className="w-3.5 h-3.5" />
+                            <span>Approve & Verify</span>
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleSuspend(hosp.id, hosp.name)}
+                            className="px-2.5 py-1.5 rounded-lg bg-slate-100 text-slate-600 hover:bg-rose-50 hover:text-rose-600 text-xs font-semibold transition-all flex items-center space-x-1"
+                          >
+                            <Ban className="w-3.5 h-3.5" />
+                            <span>Suspend</span>
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

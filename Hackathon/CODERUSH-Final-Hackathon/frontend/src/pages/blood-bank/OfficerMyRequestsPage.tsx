@@ -3,6 +3,7 @@ import { useAppDispatch, useAppSelector } from '../../hooks/redux';
 import { fetchEmergencyRequests, createEmergencyRequestApi } from '../../store/slices/emergencySlice';
 import { BloodGroup, BloodComponent, UrgencyLevel, EmergencyRequest } from '../../types';
 import { StatusBadge } from '../../components/common/Badge';
+import { SkeletonRequestCard } from '../../components/common/Skeleton';
 import {
   Send,
   PlusCircle,
@@ -225,7 +226,13 @@ export const OfficerMyRequestsPage: React.FC = () => {
           <span className="text-xs text-slate-400 font-medium">Real-time fulfillment tracking</span>
         </div>
 
-        {myHospitalRequests.length === 0 ? (
+        {isLoading && myHospitalRequests.length === 0 ? (
+          <>
+            <SkeletonRequestCard />
+            <SkeletonRequestCard />
+            <SkeletonRequestCard />
+          </>
+        ) : myHospitalRequests.length === 0 ? (
           <div className="bg-white rounded-3xl border border-slate-100 p-16 text-center">
             <AlertCircle className="w-10 h-10 text-slate-300 mx-auto mb-2" />
             <p className="text-sm font-bold text-slate-700">No requests broadcasted yet</p>

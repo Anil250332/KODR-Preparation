@@ -3,6 +3,7 @@ import { useAppDispatch, useAppSelector } from '../../hooks/redux';
 import { fetchHospitals } from '../../store/slices/hospitalSlice';
 import { apiService } from '../../services/apiService';
 import { BloodInventoryItem } from '../../types';
+import { SkeletonTableRow } from '../../components/common/Skeleton';
 import { Building2, Droplet, Search, ShieldCheck, AlertCircle, RefreshCw } from 'lucide-react';
 
 export const AdminHospitalInventoryPage: React.FC = () => {
@@ -159,33 +160,38 @@ export const AdminHospitalInventoryPage: React.FC = () => {
 
       {/* Inventory Table */}
       <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
-        {isLoadingInventory ? (
-          <div className="py-20 text-center">
-            <div className="inline-block w-8 h-8 border-3 border-[#0d9488] border-t-transparent rounded-full animate-spin"></div>
-            <p className="text-xs font-bold text-slate-500 mt-3">Fetching real-time inventory from database...</p>
-          </div>
-        ) : filteredItems.length === 0 ? (
-          <div className="py-16 text-center">
-            <AlertCircle className="w-10 h-10 text-slate-300 mx-auto mb-2" />
-            <p className="text-sm font-bold text-slate-700">No inventory units recorded</p>
-            <p className="text-xs text-slate-400 mt-1">This hospital has not updated its blood units or no match found.</p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-slate-100 bg-slate-50/75 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                  <th className="py-4 px-6">Blood Group</th>
-                  <th className="py-4 px-6">Component</th>
-                  <th className="py-4 px-6">Available Units</th>
-                  <th className="py-4 px-6">Reserved</th>
-                  <th className="py-4 px-6">Storage Temp</th>
-                  <th className="py-4 px-6">Expiry Date</th>
-                  <th className="py-4 px-6">Status</th>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="border-b border-slate-100 bg-slate-50/75 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                <th className="py-4 px-6">Blood Group</th>
+                <th className="py-4 px-6">Component</th>
+                <th className="py-4 px-6">Available Units</th>
+                <th className="py-4 px-6">Reserved</th>
+                <th className="py-4 px-6">Storage Temp</th>
+                <th className="py-4 px-6">Expiry Date</th>
+                <th className="py-4 px-6">Status</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 text-xs">
+              {isLoadingInventory ? (
+                <>
+                  <SkeletonTableRow cols={7} />
+                  <SkeletonTableRow cols={7} />
+                  <SkeletonTableRow cols={7} />
+                  <SkeletonTableRow cols={7} />
+                  <SkeletonTableRow cols={7} />
+                </>
+              ) : filteredItems.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-16 text-center">
+                    <AlertCircle className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+                    <p className="text-sm font-bold text-slate-700">No inventory units recorded</p>
+                    <p className="text-xs text-slate-400 mt-1">This hospital has not updated its blood units or no match found.</p>
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 text-xs">
-                {filteredItems.map((item) => (
+              ) : (
+                filteredItems.map((item) => (
                   <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
                     <td className="py-4 px-6">
                       <div className="inline-flex items-center gap-2">
@@ -220,11 +226,11 @@ export const AdminHospitalInventoryPage: React.FC = () => {
                       )}
                     </td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

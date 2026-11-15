@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../../hooks/redux';
 import { StatCard } from '../../components/common/StatCard';
 import { StatusBadge } from '../../components/common/Badge';
+import { Skeleton, SkeletonListItem } from '../../components/common/Skeleton';
 import { fetchEmergencyRequests } from '../../store/slices/emergencySlice';
 import { apiService } from '../../services/apiService';
 import { BloodInventoryItem } from '../../types';
@@ -23,8 +24,8 @@ export const HospitalOverviewPage: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { currentUser } = useAppSelector((state) => state.auth);
-  const { hospitals } = useAppSelector((state) => state.hospitals);
-  const { requests } = useAppSelector((state) => state.emergency);
+  const { hospitals, isLoading: hospitalsLoading } = useAppSelector((state) => state.hospitals);
+  const { requests, isLoading: emergencyLoading } = useAppSelector((state) => state.emergency);
 
   const hospitalId = currentUser?.hospitalId || '6ae5bfa3a41657de36e25a1d';
   const currentHosp = hospitals.find((h) => h.id === hospitalId);
@@ -32,10 +33,16 @@ export const HospitalOverviewPage: React.FC = () => {
 
   const [inventory, setInventory] = useState<BloodInventoryItem[]>([]);
   const [officerCount, setOfficerCount] = useState<number>(4);
+  const [isInventoryLoading, setIsInventoryLoading] = useState<boolean>(true);
 
   useEffect(() => {
     dispatch(fetchEmergencyRequests());
-    apiService.getHospitalInventory(hospitalId).then(setInventory).catch(() => {});
+    setIsInventoryLoading(true);
+    apiService
+      .getHospitalInventory(hospitalId)
+      .then(setInventory)
+      .catch(() => {})
+      .finally(() => setIsInventoryLoading(false));
     apiService.getUsers(hospitalId).then((users) => setOfficerCount(users.length || 4)).catch(() => {});
   }, [dispatch, hospitalId]);
 
@@ -106,6 +113,7 @@ export const HospitalOverviewPage: React.FC = () => {
           subtitle="Real-time stored blood units"
           icon={Droplet}
           color="teal"
+          isLoading={isInventoryLoading && inventory.length === 0}
         />
         <StatCard
           title="Hospital Officers"
@@ -120,6 +128,7 @@ export const HospitalOverviewPage: React.FC = () => {
           subtitle="Hospitals awaiting blood support"
           icon={Radio}
           color="rose"
+          isLoading={emergencyLoading && requests.length === 0}
         />
         <StatCard
           title="Emergencies Helped"
@@ -127,6 +136,7 @@ export const HospitalOverviewPage: React.FC = () => {
           subtitle="Requests accepted by this centre"
           icon={HeartHandshake}
           color="blue"
+          isLoading={emergencyLoading && requests.length === 0}
         />
       </div>
 
@@ -149,23 +159,37 @@ export const HospitalOverviewPage: React.FC = () => {
           </div>
 
           <div className="mt-5 grid grid-cols-2 sm:grid-cols-3 gap-3.5">
-            {inventory.slice(0, 6).map((item) => (
-              <div
-                key={item.id}
-                className="p-4 rounded-2xl border border-slate-100 bg-slate-50/60 hover:bg-slate-50 transition-colors"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="font-black text-sm text-slate-900">{item.bloodGroup}</span>
-                  <span className="text-[10px] font-bold text-[#0d9488] bg-teal-50 px-2 py-0.5 rounded-full border border-teal-100">
-                    {item.component}
-                  </span>
+            {isInventoryLoading && inventory.length === 0 ? (
+              Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="p-4 rounded-2xl border border-slate-100 bg-slate-50/60 space-y-3">
+                  <div className="flex justify-between items-center">
+                    <Skeleton className="h-4 w-8" />
+                    <Skeleton className="h-4 w-12 rounded-full" />
+                  </div>
+                  <Skeleton className="h-6 w-16" />
                 </div>
-                <div className="mt-3 flex items-baseline justify-between">
-                  <span className="text-xl font-black text-slate-900">{item.availableUnits}</span>
-                  <span className="text-[10px] text-slate-400 font-semibold">Available</span>
+              ))
+            ) : inventory.length === 0 ? (
+              <p className="col-span-3 text-xs text-slate-400 text-center py-8 font-medium">No blood stock entries recorded</p>
+            ) : (
+              inventory.slice(0, 6).map((item) => (
+                <div
+                  key={item.id}
+                  className="p-4 rounded-2xl border border-slate-100 bg-slate-50/60 hover:bg-slate-50 transition-colors"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-black text-sm text-slate-900">{item.bloodGroup}</span>
+                    <span className="text-[10px] font-bold text-[#0d9488] bg-teal-50 px-2 py-0.5 rounded-full border border-teal-100">
+                      {item.component}
+                    </span>
+                  </div>
+                  <div className="mt-3 flex items-baseline justify-between">
+                    <span className="text-xl font-black text-slate-900">{item.availableUnits}</span>
+                    <span className="text-[10px] text-slate-400 font-semibold">Available</span>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
         </div>
 
@@ -186,33 +210,40 @@ export const HospitalOverviewPage: React.FC = () => {
           </div>
 
           <div className="mt-5 space-y-3">
-            {incomingRequests.slice(0, 3).map((req) => (
-              <div
-                key={req.id}
-                className="p-4 rounded-2xl border border-slate-100 bg-slate-50/60 hover:bg-slate-50 transition-colors"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <span className="w-9 h-9 rounded-xl bg-rose-50 text-rose-600 font-black text-xs flex items-center justify-center border border-rose-100">
-                      {req.bloodGroup}
-                    </span>
-                    <div>
-                      <p className="font-bold text-xs text-slate-900">
-                        {req.requiredUnits} Units {req.component}
-                      </p>
-                      <p className="text-[11px] text-slate-400">
-                        Requested by {req.requestingHospitalName} ({req.requestingHospitalCity || 'Indore'})
-                      </p>
-                    </div>
-                  </div>
-                  <StatusBadge status={req.urgency} />
-                </div>
+            {emergencyLoading && requests.length === 0 ? (
+              <div className="divide-y divide-slate-100">
+                <SkeletonListItem />
+                <SkeletonListItem />
+                <SkeletonListItem />
               </div>
-            ))}
-            {incomingRequests.length === 0 && (
+            ) : incomingRequests.length === 0 ? (
               <p className="text-xs text-slate-400 text-center py-8">
                 No open emergency alerts in your network right now.
               </p>
+            ) : (
+              incomingRequests.slice(0, 3).map((req) => (
+                <div
+                  key={req.id}
+                  className="p-4 rounded-2xl border border-slate-100 bg-slate-50/60 hover:bg-slate-50 transition-colors"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <span className="w-9 h-9 rounded-xl bg-rose-50 text-rose-600 font-black text-xs flex items-center justify-center border border-rose-100">
+                        {req.bloodGroup}
+                      </span>
+                      <div>
+                        <p className="font-bold text-xs text-slate-900">
+                          {req.requiredUnits} Units {req.component}
+                        </p>
+                        <p className="text-[11px] text-slate-400">
+                          Requested by {req.requestingHospitalName} ({req.requestingHospitalCity || 'Indore'})
+                        </p>
+                      </div>
+                    </div>
+                    <StatusBadge status={req.urgency} />
+                  </div>
+                </div>
+              ))
             )}
           </div>
         </div>
